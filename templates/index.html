@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ship Mechanic Assistant</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+         margin: 0; background: #0f172a; color: #e2e8f0; }
+  header { background: #1e293b; padding: 18px 24px; border-bottom: 2px solid #334155; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; color: #94a3b8; font-size: 13px; }
+
+  .layout { display: flex; gap: 20px; align-items: flex-start;
+            max-width: 1140px; margin: 0 auto; padding: 24px; }
+  .sidebar { width: 300px; flex-shrink: 0; }
+  .main { flex: 1; min-width: 0; }
+  @media (max-width: 780px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; }
+  }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+          padding: 20px; margin-bottom: 20px; }
+  h2 { font-size: 15px; margin: 0 0 14px; color: #cbd5e1; text-transform: uppercase;
+       letter-spacing: .5px; }
+  textarea, input[type=text] { width: 100%; background: #0f172a; color: #e2e8f0;
+       border: 1px solid #475569; border-radius: 8px; padding: 12px; font-size: 16px;
+       font-family: inherit; }
+  textarea { resize: vertical; min-height: 70px; }
+  select { background: #0f172a; color: #e2e8f0; border: 1px solid #475569;
+       border-radius: 8px; padding: 8px 10px; font-size: 15px; font-family: inherit; }
+  button { background: #2563eb; color: #fff; border: 0; border-radius: 8px;
+       padding: 12px 22px; font-size: 16px; cursor: pointer; margin-top: 12px; }
+  button:hover { background: #1d4ed8; }
+  button:disabled { opacity: .5; cursor: default; }
+  .files { list-style: none; padding: 0; margin: 0; }
+  .files li { display: flex; justify-content: space-between; align-items: center;
+       padding: 8px 0; border-bottom: 1px solid #334155; font-size: 14px; gap: 8px; }
+  .files li:last-child { border-bottom: 0; }
+  .files .name { word-break: break-word; }
+  .files .del { color: #f87171; cursor: pointer; font-size: 13px; background: none;
+       padding: 4px 8px; margin: 0; flex-shrink: 0; }
+  .muted { color: #94a3b8; font-size: 13px; }
+  .answer { white-space: pre-wrap; line-height: 1.55; font-size: 16px; }
+  .src { background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+       padding: 12px; margin-top: 10px; font-size: 14px; }
+  .src .head { color: #60a5fa; font-weight: 600; margin-bottom: 6px; }
+  .src .body { color: #cbd5e1; max-height: 140px; overflow: auto; white-space: pre-wrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+  .ok { background: #064e3b; color: #6ee7b7; }
+  .warn { background: #78350f; color: #fcd34d; }
+  .spin { color: #94a3b8; }
+  #drop { border: 2px dashed #475569; border-radius: 10px; padding: 18px; text-align: center;
+       color: #94a3b8; cursor: pointer; font-size: 14px; }
+  #drop.over { border-color: #2563eb; color: #93c5fd; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚓ Ship Mechanic Assistant</h1>
+  <p>Search your manuals and get answers grounded in the documentation</p>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT SIDEBAR: the manual library -->
+  <aside class="sidebar">
+    <div class="card">
+      <h2>📚 Manuals</h2>
+      <div id="drop">Drag a PDF here, or click to choose</div>
+      <input type="file" id="file" accept="application/pdf" style="display:none">
+      <div id="uploadMsg" class="muted" style="margin-top:10px"></div>
+      <ul class="files" id="files" style="margin-top:14px"></ul>
+    </div>
+    <div class="card">
+      <h2>Status</h2>
+      <div id="keyState" class="muted"></div>
+      <div id="today" class="muted" style="margin-top:6px"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN: ask & answer -->
+  <main class="main">
+
+    <div id="banner" class="card" style="display:none; border-color:#b45309; background:#3b2410">
+      <h2 style="color:#fcd34d">⚠ Index needs rebuilding</h2>
+      <div id="bannerMsg" class="muted" style="margin-bottom:12px"></div>
+      <button id="reindexBtn">Re-index now (uses the current model)</button>
+      <div id="reindexMsg" class="muted" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Question</h2>
+      <textarea id="q" placeholder="e.g. How do I replace the valve seal? How do I repair the main cock?"></textarea>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <label class="muted" for="depth">Search depth:</label>
+        <select id="depth">
+          <option value="economy">Economy — fewer tokens</option>
+          <option value="balanced">Balanced</option>
+          <option value="thorough">Thorough — best answers</option>
+          <option value="offline">Offline AI — local model (free)</option>
+        </select>
+        <span id="depthHint" class="muted"></span>
+      </div>
+      <button id="ask">Ask</button>
+    </div>
+
+    <div class="card" id="result" style="display:none">
+      <h2>Answer</h2>
+      <div id="answer" class="answer"></div>
+      <div id="sources" style="margin-top:16px"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+const DEPTH_HINTS = {
+  economy:  '1 manual, 3 excerpts — cheapest',
+  balanced: '2 manuals, 4 excerpts — default',
+  thorough: '3 manuals, 8 excerpts — most thorough, costs more',
+  offline:  'answered by the local model — free, works offline',
+};
+function setDepthHint(d) { $('#depthHint').textContent = DEPTH_HINTS[d] || ''; }
+
+$('#depth').onchange = async () => {
+  const v = $('#depth').value;
+  setDepthHint(v);
+  await fetch('/settings', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({depth: v})});
+};
+
+function showBanner(msg) {
+  $('#bannerMsg').textContent = msg ||
+    'The loaded index was built with a different embedding model. Rebuild it once to use the current model. Your PDFs are kept, so nothing needs re-uploading.';
+  $('#banner').style.display = 'block';
+}
+
+async function refresh() {
+  const r = await fetch('/status'); const d = await r.json();
+  const ul = $('#files'); ul.innerHTML = '';
+  if (!d.sources.length) ul.innerHTML = '<li class="muted">No manuals loaded yet.</li>';
+  d.sources.forEach(s => {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.className = 'name';
+    span.innerHTML = `📄 ${s.source} <span class="muted">(${s.chunks})</span>`;
+    const b = document.createElement('button');
+    b.className = 'del'; b.textContent = 'remove';
+    b.onclick = async () => { await fetch('/delete', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({source: s.source})}); refresh(); };
+    li.appendChild(span); li.appendChild(b); ul.appendChild(li);
+  });
+  $('#keyState').innerHTML = d.has_key
+    ? '<span class="badge ok">Online answers enabled</span>'
+    : '<span class="badge warn">No API key — search-only mode (offline)</span>';
+
+  if (d.today) {
+    const t = d.today;
+    $('#today').textContent = `Today: ≈ $${t.cost_usd.toFixed(4)}  ·  ${t.queries} question(s)`;
+  }
+
+  if (d.depth) {
+    $('#depth').value = d.depth;
+    setDepthHint(d.depth);
+  }
+
+  if (d.index && d.index.compatible === false) {
+    showBanner(`The index was built with "${d.index.stored_model}", but the current model is "${d.index.current_model}".`);
+  } else {
+    $('#banner').style.display = 'none';
+  }
+}
+
+$('#reindexBtn').onclick = async () => {
+  const btn = $('#reindexBtn');
+  btn.disabled = true;
+  $('#reindexMsg').innerHTML = '<span class="spin">Rebuilding the index with the current model... this can take a few minutes.</span>';
+  const r = await fetch('/reindex', {method:'POST'});
+  const d = await r.json();
+  if (d.error) $('#reindexMsg').innerHTML = `<span class="badge warn">${d.error}</span>`;
+  else $('#reindexMsg').innerHTML = `<span class="badge ok">Done: ${d.files} file(s), ${d.chunks} chunks.</span>`;
+  btn.disabled = false;
+  refresh();
+};
+
+async function upload(file) {
+  if (!file) return;
+  $('#uploadMsg').innerHTML = `<span class="spin">Processing "${file.name}"... this can take a while for large files.</span>`;
+  const fd = new FormData(); fd.append('file', file);
+  const r = await fetch('/upload', {method:'POST', body: fd});
+  const d = await r.json();
+  if (d.error) { $('#uploadMsg').innerHTML = `<span class="badge warn">Error: ${d.error}</span>`; if (d.mismatch) showBanner(); }
+  else if (d.warning) $('#uploadMsg').innerHTML = `<span class="badge warn">${d.warning}</span>`;
+  else $('#uploadMsg').innerHTML = `<span class="badge ok">Done: ${d.source}, ${d.chunks} chunks${d.ocr_used ? ' (text recovered via OCR)' : ''}</span>`;
+  refresh();
+}
+
+const drop = $('#drop'), fileInput = $('#file');
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => upload(fileInput.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); upload(e.dataTransfer.files[0]); };
+
+$('#ask').onclick = async () => {
+  const q = $('#q').value.trim(); if (!q) return;
+  $('#result').style.display = 'block';
+  $('#answer').innerHTML = '<span class="spin">Searching the manuals and preparing an answer...</span>';
+  $('#sources').innerHTML = '';
+  const r = await fetch('/ask', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({question: q})});
+  const d = await r.json();
+  if (d.error) { $('#answer').innerHTML = `<span class="badge warn">Error: ${d.error}</span>`; if (d.mismatch) showBanner(); return; }
+
+  if (d.answer) {
+    $('#answer').textContent = d.answer;
+    const div = document.createElement('div');
+    div.className = 'muted';
+    div.style.marginTop = '10px';
+    if (d.usage) {
+      const u = d.usage;
+      div.textContent = `Cost: ≈ $${u.cost_usd.toFixed(4)}  ·  ${u.input.toLocaleString()} in / ${u.output.toLocaleString()} out tokens  ·  ${u.model}`;
+      $('#answer').appendChild(div);
+    } else if (d.engine === 'local') {
+      div.textContent = 'Answered by the local model — free, offline';
+      $('#answer').appendChild(div);
+    }
+  }
+  else $('#answer').innerHTML = `<span class="badge warn">${d.note || 'AI answer unavailable'}</span>`;
+
+  if (d.sources && d.sources.length) {
+    let html = '<h2>Sources (manual excerpts)</h2>';
+    d.sources.forEach(s => {
+      html += `<div class="src"><div class="head">[Source ${s.n}] ${s.source}, page ${s.page}
+        <span class="muted">· relevance ${s.score}</span></div>
+        <div class="body">${s.text.replace(/</g,'&lt;')}</div></div>`;
+    });
+    $('#sources').innerHTML = html;
+  }
+  refresh();  // update today's spend counter
+};
+
+refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Secrets — never commit
+.env
+
+# Runtime data
+usage_log.json
+settings.json
+
+# Local data and downloads
+venv/
+chroma_db/
+__pycache__/
+*.pyc
+
+# The user's own PDFs are not shared, but keep the folder note in the repo
+manuals/*
+!manuals/README.txt
