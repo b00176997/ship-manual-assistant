@@ -122,6 +122,13 @@ Everything is in `config.py`:
 > one-click **"Re-index now"** button — your PDFs stay in `manuals/`, so nothing needs
 > re-uploading. (You can also re-index from the console with `python ingest_folder.py`.)
 
+## Checking that everything works
+
+Double-click **`check_system.bat`** for a one-screen report: Python, GPU (it runs a
+real test — `cuda.is_available()` alone can lie when the CUDA build doesn't match the
+card), the search model, loaded manuals, offline AI, OCR and updates. If something is
+wrong it prints exactly what to do. Handy to send as a screenshot when asking for help.
+
 ## Updating
 
 To push an update to another computer (e.g. the user's), keep the project in a (private)

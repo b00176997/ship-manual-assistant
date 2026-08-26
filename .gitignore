@@ -5,6 +5,10 @@
 usage_log.json
 settings.json
 
+# One-time bootstrap script, handed out separately. Kept OUT of the repo so that
+# `git reset --hard` never rewrites it while it is running (Windows batch hazard).
+enable_updates.bat
+
 # Local data and downloads
 venv/
 chroma_db/
