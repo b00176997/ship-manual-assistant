@@ -4,7 +4,7 @@ echo === Connecting this copy to updates (one-time) ===
 echo.
 
 REM Address of the update server. Filled in by the maintainer.
-set REPO_URL=PUT-REPOSITORY-URL-HERE
+set REPO_URL=https://github.com/b00176997/ship-manual-assistant.git
 
 echo %REPO_URL% | findstr /C:"PUT-REPOSITORY-URL-HERE" >nul
 if not errorlevel 1 (
