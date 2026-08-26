@@ -25,10 +25,12 @@ py -3.12 -m venv venv
 echo [2/5] Installing libraries (this takes a few minutes)...
 call venv\Scripts\activate
 python -m pip install --upgrade pip
+REM CUDA 12.8 is required for RTX 50-series (Blackwell, sm_120) and also covers
+REM older cards (RTX 30/40 series) - do not downgrade this to cu124.
 where nvidia-smi >nul 2>&1
 if not errorlevel 1 (
-  echo   NVIDIA GPU detected - installing GPU-accelerated torch ^(~2.5 GB, one-time^)...
-  pip install torch --index-url https://download.pytorch.org/whl/cu124
+  echo   NVIDIA GPU detected - installing GPU-accelerated torch ^(~3 GB, one-time^)...
+  pip install torch --index-url https://download.pytorch.org/whl/cu128
 ) else (
   echo   No NVIDIA GPU detected - using the CPU build ^(indexing will be slower^).
 )

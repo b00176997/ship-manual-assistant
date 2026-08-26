@@ -53,7 +53,9 @@ AI_BACKEND = "claude"
 
 # --- Local offline model (Ollama) for the "Offline AI" mode ---
 # Install Ollama from https://ollama.com ; setup.bat pulls this model.
-# qwen2.5:7b fits an 8 GB GPU (e.g. laptop RTX 4060).
+# qwen2.5:7b (~5 GB) runs on any 8 GB+ GPU — the safe default.
+# With a 12 GB+ card you can upgrade by putting OLLAMA_MODEL=qwen2.5:14b in .env
+# (then run: ollama pull qwen2.5:14b).
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 

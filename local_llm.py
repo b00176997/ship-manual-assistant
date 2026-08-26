@@ -20,8 +20,11 @@ def is_available():
         return False
     names = [m.get("name", "") for m in tags.get("models", [])]
     want = config.OLLAMA_MODEL
-    return any(n == want or n.startswith(want + "-") or n.split(":")[0] == want.split(":")[0]
-               for n in names)
+    # Must match the exact tag we will ask for, otherwise generate() would fail with
+    # "model not found". Only when no tag is configured do we accept any variant.
+    if ":" in want:
+        return want in names
+    return any(n.split(":")[0] == want for n in names)
 
 
 def generate(system, prompt):
