@@ -50,12 +50,14 @@ if errorlevel 1 (
 
 echo.
 echo ===============================================================
-echo  NEXT STEP - start the model server (downloads the model once):
+echo  NEXT STEP:
 echo.
-echo      ft serve Qwen3.6-35B-A3B
+echo    1. Double-click  start_big_model.bat
+echo       ^(the first start downloads the model, about 20 GB^)
+echo    2. Leave that window open
+echo    3. In the program pick "Offline AI - big model"
 echo.
-echo  Leave that window open, then pick "Offline AI - big model"
-echo  in the program. Run check_system.bat to confirm it is detected.
+echo  Run check_system.bat to confirm it is detected.
 echo ===============================================================
 pause
 exit /b 0

@@ -82,10 +82,10 @@ def answer(question):
     if config.AI_BACKEND in ("local", "freetoken"):
         if config.AI_BACKEND == "freetoken":
             engine, backend, missing = freetoken_llm, "freetoken", (
-                "The big local model (FreeToken) is not running. Start it with "
-                "'ft serve <model>', or run install_freetoken.bat if it isn't installed. "
-                "You can also switch to 'Offline AI - small model'. "
-                "Showing manual excerpts for now."
+                "The big local model is not running. Double-click start_big_model.bat "
+                "and leave that window open (run install_freetoken.bat first if you "
+                "haven't installed it). You can also switch to 'Offline AI - small "
+                "model'. Showing manual excerpts for now."
             )
         else:
             engine, backend, missing = local_llm, "local", (

@@ -87,7 +87,8 @@ try:
     if freetoken_llm.is_available():
         line(OK, "Offline AI - big model", freetoken_llm.describe())
     elif shutil.which("ft"):
-        line(WARN, "Offline AI - big model", "installed but not serving - run: ft serve <model>")
+        line(WARN, "Offline AI - big model",
+             "installed but not running - start start_big_model.bat")
     else:
         line(WARN, "Offline AI - big model", "not installed (optional) - see install_freetoken.bat")
 except Exception as e:

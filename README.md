@@ -158,9 +158,13 @@ models on consumer hardware by spreading them across the GPU **and** system RAM,
 35B-class model fits on a 12–16 GB card. It serves an Anthropic-compatible API, which
 this app talks to directly.
 
-1. Run **`install_freetoken.bat`** (needs an NVIDIA card; ~20 GB download).
-2. Start the server and leave the window open: `ft serve Qwen3.6-35B-A3B`
+1. Run **`install_freetoken.bat`** (needs an NVIDIA card).
+2. Run **`start_big_model.bat`** and leave that window open. The first start
+   downloads the model (~20 GB); later starts are fast. Closing the window stops the
+   big model — everything else keeps working.
 3. Pick **"Offline AI — big model"** in the app.
+
+(To serve a different model, change `FT_MODEL` at the top of `start_big_model.bat`.)
 
 `check_system.bat` shows whether it is detected. The project does not fix a default port,
 so the app probes the usual ones; override with `FREETOKEN_URL` in `.env` if needed.
