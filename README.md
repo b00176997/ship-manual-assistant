@@ -158,11 +158,24 @@ models on consumer hardware by spreading them across the GPU **and** system RAM,
 35B-class model fits on a 12–16 GB card. It serves an Anthropic-compatible API, which
 this app talks to directly.
 
-1. Run **`install_freetoken.bat`** (needs an NVIDIA card).
-2. Run **`start_big_model.bat`** and leave that window open. The first start
-   downloads the model (~20 GB); later starts are fast. Closing the window stops the
-   big model — everything else keeps working.
-3. Pick **"Offline AI — big model"** in the app.
+> ⚠️ **Windows note.** FreeToken's command-line version is **Linux-only**: its install
+> docs list `Linux x86_64` as the requirement, and the PyPI package hard-depends on
+> `triton==3.6.0`, which has no Windows build (`pip install freetoken` therefore always
+> fails on Windows). On Windows the only route is the **desktop app** from
+> [flashml.ai](https://flashml.ai). Run `install_freetoken.bat` — it explains this and
+> what to do instead of wasting a download.
+
+If you have the server running (desktop app on Windows, or `ft serve` on Linux), this
+app finds it automatically — just pick **"Offline AI — big model"**. `check_system.bat`
+shows whether it is detected; if the server uses another port, set `FREETOKEN_URL` in
+`.env`. On Linux you can also use **`start_big_model.bat`**'s equivalent command
+(`ft serve Qwen3.6-35B-A3B`).
+
+### Simpler upgrade that works on Windows today
+
+**`upgrade_offline_model.bat`** checks how much graphics memory you have and switches the
+offline model to the best fit (a 14B model on a 12 GB+ card instead of the default 7B).
+No new software, no Linux, and it records the choice in `.env` automatically.
 
 (To serve a different model, change `FT_MODEL` at the top of `start_big_model.bat`.)
 
