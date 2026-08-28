@@ -10,10 +10,11 @@ SETTINGS_FILE = config.BASE_DIR / "settings.json"
 # More docs + more chunks = more thorough answers but more tokens.
 # "offline" uses the local model (Ollama): free, no internet — backend="local".
 DEPTH_PRESETS = {
-    "offline":  {"ROUTE_TOP_DOCS": 2, "TOP_K_ROUTED": 6, "backend": "local"},
-    "economy":  {"ROUTE_TOP_DOCS": 1, "TOP_K_ROUTED": 3, "backend": "claude"},
-    "balanced": {"ROUTE_TOP_DOCS": 2, "TOP_K_ROUTED": 4, "backend": "claude"},
-    "thorough": {"ROUTE_TOP_DOCS": 3, "TOP_K_ROUTED": 8, "backend": "claude"},
+    "offline":     {"ROUTE_TOP_DOCS": 2, "TOP_K_ROUTED": 6, "backend": "local"},
+    "offline_big": {"ROUTE_TOP_DOCS": 2, "TOP_K_ROUTED": 6, "backend": "freetoken"},
+    "economy":     {"ROUTE_TOP_DOCS": 1, "TOP_K_ROUTED": 3, "backend": "claude"},
+    "balanced":    {"ROUTE_TOP_DOCS": 2, "TOP_K_ROUTED": 4, "backend": "claude"},
+    "thorough":    {"ROUTE_TOP_DOCS": 3, "TOP_K_ROUTED": 8, "backend": "claude"},
 }
 DEFAULT_DEPTH = "balanced"
 

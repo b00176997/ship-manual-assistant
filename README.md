@@ -151,6 +151,23 @@ To enable it:
 (`OLLAMA_MODEL`) — e.g. `qwen2.5:14b` on a 12 GB+ GPU for better quality. If Ollama isn't
 running, the Offline AI mode simply shows the manual excerpts with a hint.
 
+### Bigger offline model (FreeToken, optional)
+
+[FreeToken](https://github.com/FlashML-org/FreeToken) runs frontier Mixture-of-Experts
+models on consumer hardware by spreading them across the GPU **and** system RAM, so a
+35B-class model fits on a 12–16 GB card. It serves an Anthropic-compatible API, which
+this app talks to directly.
+
+1. Run **`install_freetoken.bat`** (needs an NVIDIA card; ~20 GB download).
+2. Start the server and leave the window open: `ft serve Qwen3.6-35B-A3B`
+3. Pick **"Offline AI — big model"** in the app.
+
+`check_system.bat` shows whether it is detected. The project does not fix a default port,
+so the app probes the usual ones; override with `FREETOKEN_URL` in `.env` if needed.
+
+> Optional extra, not a requirement. If FreeToken is missing or stopped, the app says so
+> and falls back to showing excerpts — everything else keeps working.
+
 ## Scanned manuals (OCR)
 
 Many paper manuals are scanned — each page is an **image**, with no machine-readable
@@ -194,7 +211,11 @@ and applied immediately:
 | Economy | 1 | 3 | cheapest, quick lookups |
 | Balanced | 2 | 4 | default |
 | Thorough | 3 | 8 | hardest questions, best answers (costs more) |
-| Offline AI | 2 | 6 | **uses the local model (Ollama), not Claude** — free, works with no internet. Quality is lower than Claude, so use it as the at-sea / no-cost option. If Ollama isn't installed, it falls back to showing excerpts only. |
+| Offline AI — small model | 2 | 6 | **uses the local model (Ollama), not Claude** — free, works with no internet. Quality is lower than Claude, so use it as the at-sea / no-cost option. |
+| Offline AI — big model | 2 | 6 | **uses a large local model via FreeToken** — free and offline, best local quality. Needs the optional install (see above). |
+
+In both offline modes Claude is never contacted, so nothing is billed. If the chosen local
+engine isn't running, the excerpts are still shown together with a note on what to start.
 
 (Defaults still live in `config.py`: `ROUTE_DOCS`, `ROUTE_TOP_DOCS`, `TOP_K_ROUTED`.)
 

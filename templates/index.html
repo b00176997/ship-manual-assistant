@@ -100,7 +100,8 @@
           <option value="economy">Economy — fewer tokens</option>
           <option value="balanced">Balanced</option>
           <option value="thorough">Thorough — best answers</option>
-          <option value="offline">Offline AI — local model (free)</option>
+          <option value="offline">Offline AI — small model (free)</option>
+          <option value="offline_big">Offline AI — big model (free, needs FreeToken)</option>
         </select>
         <span id="depthHint" class="muted"></span>
       </div>
@@ -123,7 +124,8 @@ const DEPTH_HINTS = {
   economy:  '1 manual, 3 excerpts — cheapest',
   balanced: '2 manuals, 4 excerpts — default',
   thorough: '3 manuals, 8 excerpts — most thorough, costs more',
-  offline:  'answered by the local model — free, works offline',
+  offline:  'small local model — free, works offline',
+  offline_big: 'big local model via FreeToken — free, offline, best local quality',
 };
 function setDepthHint(d) { $('#depthHint').textContent = DEPTH_HINTS[d] || ''; }
 
