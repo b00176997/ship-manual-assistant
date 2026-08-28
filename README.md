@@ -166,6 +166,13 @@ this app talks to directly.
 
 (To serve a different model, change `FT_MODEL` at the top of `start_big_model.bat`.)
 
+**If the model server window seems to do nothing:** the first start downloads ~20 GB and
+can print nothing for a long time — that is normal. To check whether it is up yet, run
+`check_system.bat` in a second window. If it exited with an error, run
+**`freetoken_help.bat`** — it reports whether FreeToken is installed, whether a server is
+answering on port 8000, and prints `ft --help` / `ft serve --help` with the accepted
+model names.
+
 `check_system.bat` shows whether it is detected. The project does not fix a default port,
 so the app probes the usual ones; override with `FREETOKEN_URL` in `.env` if needed.
 
