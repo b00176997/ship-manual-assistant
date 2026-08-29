@@ -17,6 +17,6 @@ if not exist venv (
   exit /b 1
 )
 call venv\Scripts\activate
-python upgrade_offline_model.py
+python upgrade_offline_model.py %*
 echo.
 pause
