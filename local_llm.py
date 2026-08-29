@@ -2,6 +2,7 @@
 Free, runs without internet. If Ollama isn't installed/running or the model
 isn't pulled, the caller falls back to showing manual excerpts only."""
 import json
+import urllib.error
 import urllib.request
 
 import config

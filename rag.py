@@ -87,11 +87,15 @@ def answer(question):
                 return {"answer": text, "sources": sources, "online": False,
                         "engine": "local"}
             except Exception as e:
+                # Keep the message, not just the class name: our own errors explain
+                # what to do (e.g. raise OLLAMA_MAX_TOKENS), and that is the whole
+                # point of showing it to the user.
+                detail = str(e).strip() or type(e).__name__
                 return {
                     "answer": None,
                     "sources": sources,
                     "online": False,
-                    "note": f"Local AI error ({type(e).__name__}). Showing manual excerpts.",
+                    "note": f"Local AI error: {detail}. Showing manual excerpts.",
                 }
         return {
             "answer": None,
