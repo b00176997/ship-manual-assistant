@@ -58,6 +58,10 @@ AI_BACKEND = "claude"
 # (then run: ollama pull qwen2.5:14b).
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+# Local models tend to ramble: qwen3.6:27b wrote 3935 tokens (~5 min) where the
+# useful answer was ~600. Cap the length and ask for brevity - big quality win in
+# waiting time, no loss of content.
+OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "1200"))
 
 # --- Big local model (FreeToken) for the "Offline AI - big model" mode ---
 # Optional. Runs frontier MoE models across GPU + RAM, so a 35B-class model fits
