@@ -15,8 +15,9 @@ if errorlevel 1 (
   exit /b 1
 )
 if not exist ".git" (
-  echo This folder is not connected to the update server.
-  echo Run enable_updates.bat first ^(ask for it if you don't have it^).
+  echo This folder is not connected to the update server, so it cannot update
+  echo itself. Ask for a fresh copy of the program - your manuals, settings and
+  echo API key are kept if you unpack it over this folder.
   pause
   exit /b 1
 )
