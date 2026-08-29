@@ -122,6 +122,24 @@ Everything is in `config.py`:
 > one-click **"Re-index now"** button — your PDFs stay in `manuals/`, so nothing needs
 > re-uploading. (You can also re-index from the console with `python ingest_folder.py`.)
 
+## Translator tab
+
+The **🌐 Translator** tab is a free-form writing helper that runs entirely on the
+**local** model — free, no internet, nothing billed. Write the instruction and the text
+together, in Russian or English, for example:
+
+```
+переведи на английский и оформи как деловое письмо: нужны запчасти для главного
+двигателя, срочно
+```
+
+It returns just the finished text (no commentary), formats letters/emails properly, and
+keeps part numbers and units intact. Typical time on a 27B local model: 10–25 seconds.
+There is a **Copy** button for pasting into mail.
+
+It uses the same model as the offline answer modes (`OLLAMA_MODEL`), so if Ollama isn't
+running the tab says so instead of failing silently. Length limit: `TRANSLATE_MAX_TOKENS`.
+
 ## Checking that everything works
 
 Double-click **`check_system.bat`** for a one-screen report: Python, GPU (it runs a

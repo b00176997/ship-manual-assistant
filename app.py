@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 import config
 import costs
 import settings
+import translator
 from ingest import (
     ingest_pdf,
     list_sources,
@@ -105,6 +106,25 @@ def delete():
         except Exception:
             pass
     return jsonify({"ok": True})
+
+
+@app.route("/translate", methods=["POST"])
+def translate():
+    """Free-form translate / rewrite / format, always on the local model."""
+    data = request.get_json(force=True)
+    text = (data.get("text") or "").strip()
+    if not text:
+        return jsonify({"error": "Nothing to translate"}), 400
+    if not translator.is_available():
+        return jsonify({
+            "error": "The local AI is not running. Start Ollama (and make sure the "
+                     f"model {config.OLLAMA_MODEL} is installed), then try again."
+        }), 503
+    try:
+        return jsonify({"result": translator.translate(text), "model": config.OLLAMA_MODEL})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Translation failed: {type(e).__name__}"}), 500
 
 
 @app.route("/ask", methods=["POST"])

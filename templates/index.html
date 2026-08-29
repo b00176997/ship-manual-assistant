@@ -55,6 +55,12 @@
   #drop { border: 2px dashed #475569; border-radius: 10px; padding: 18px; text-align: center;
        color: #94a3b8; cursor: pointer; font-size: 14px; }
   #drop.over { border-color: #2563eb; color: #93c5fd; }
+  .tabs { max-width: 1140px; margin: 0 auto; padding: 18px 24px 0; display: flex; gap: 8px; }
+  .tab { background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+       border-bottom: none; border-radius: 10px 10px 0 0; padding: 10px 20px;
+       font-size: 15px; margin: 0; cursor: pointer; }
+  .tab:hover { background: #24344c; }
+  .tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
 </style>
 </head>
 <body>
@@ -62,6 +68,11 @@
   <h1>⚓ Ship Mechanic Assistant</h1>
   <p>Search your manuals and get answers grounded in the documentation</p>
 </header>
+
+<div class="tabs">
+  <button class="tab active" id="tabManuals">📚 Manuals</button>
+  <button class="tab" id="tabTranslator">🌐 Translator</button>
+</div>
 
 <div class="layout">
 
@@ -91,7 +102,7 @@
       <div id="reindexMsg" class="muted" style="margin-top:10px"></div>
     </div>
 
-    <div class="card">
+    <div class="card view-manuals">
       <h2>Question</h2>
       <textarea id="q" placeholder="e.g. How do I replace the valve seal? How do I repair the main cock?"></textarea>
       <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap">
@@ -114,11 +125,87 @@
       <div id="sources" style="margin-top:16px"></div>
     </div>
 
+    <!-- TRANSLATOR VIEW -->
+    <div class="card view-translator" style="display:none">
+      <h2>🌐 Translate / write</h2>
+      <div class="muted" style="margin-bottom:10px">
+        Write what you need and paste the text below it. Runs on the local model —
+        free and works without internet.
+      </div>
+      <textarea id="trText" style="min-height:150px"
+        placeholder="Examples:&#10;Переведи на английский и оформи как письмо: привет, как дела&#10;Translate to English and make it a formal email: ..."></textarea>
+      <button id="trGo">Translate</button>
+      <button id="trClear" style="background:#334155">Clear</button>
+    </div>
+
+    <div class="card view-translator" id="trResultCard" style="display:none">
+      <h2>Result</h2>
+      <div id="trResult" class="answer"></div>
+      <button id="trCopy" style="background:#334155">Copy</button>
+      <span id="trCopied" class="muted" style="margin-left:10px"></span>
+    </div>
+
   </main>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ---------- tabs ----------
+let currentTab = 'manuals';
+function showTab(name) {
+  currentTab = name;
+  const manuals = name === 'manuals';
+  $('#tabManuals').classList.toggle('active', manuals);
+  $('#tabTranslator').classList.toggle('active', !manuals);
+  document.querySelector('.sidebar').style.display = manuals ? '' : 'none';
+  $$('.view-manuals').forEach(e => e.style.display = manuals ? '' : 'none');
+  $$('.view-translator').forEach(e => e.style.display = manuals ? 'none' : '');
+  // the answer and banner cards belong to the manuals view but are toggled
+  // by their own logic, so only force them hidden when leaving the tab
+  if (!manuals) { $('#result').style.display = 'none'; $('#banner').style.display = 'none'; }
+  else { refresh(); }
+  if (!manuals) $('#trResultCard').style.display = $('#trResult').textContent ? '' : 'none';
+}
+$('#tabManuals').onclick = () => showTab('manuals');
+$('#tabTranslator').onclick = () => showTab('translator');
+
+// ---------- translator ----------
+$('#trGo').onclick = async () => {
+  const text = $('#trText').value.trim();
+  if (!text) return;
+  const btn = $('#trGo'); btn.disabled = true;
+  $('#trResultCard').style.display = '';
+  $('#trResult').innerHTML = '<span class="spin">Working on the local model... this can take up to a minute.</span>';
+  $('#trCopied').textContent = '';
+  try {
+    const r = await fetch('/translate', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text})});
+    const d = await r.json();
+    if (d.error) $('#trResult').innerHTML = `<span class="badge warn">${d.error}</span>`;
+    else {
+      $('#trResult').textContent = d.result;
+      const note = document.createElement('div');
+      note.className = 'muted'; note.style.marginTop = '10px';
+      note.textContent = `Done locally by ${d.model} — free, no internet needed`;
+      $('#trResult').appendChild(note);
+    }
+  } catch (e) {
+    $('#trResult').innerHTML = `<span class="badge warn">Error: ${e}</span>`;
+  }
+  btn.disabled = false;
+};
+$('#trClear').onclick = () => {
+  $('#trText').value = '';
+  $('#trResult').textContent = '';
+  $('#trResultCard').style.display = 'none';
+};
+$('#trCopy').onclick = async () => {
+  const t = $('#trResult').innerText.split('\nDone locally by')[0];
+  try { await navigator.clipboard.writeText(t); $('#trCopied').textContent = 'copied'; }
+  catch { $('#trCopied').textContent = 'select the text and copy manually'; }
+};
 
 const DEPTH_HINTS = {
   economy:  '1 manual, 3 excerpts — cheapest',

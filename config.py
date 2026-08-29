@@ -62,6 +62,8 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 # useful answer was ~600. Cap the length and ask for brevity - big quality win in
 # waiting time, no loss of content.
 OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "1200"))
+# The translator writes letters, so it needs more room than a manual answer.
+TRANSLATE_MAX_TOKENS = int(os.getenv("TRANSLATE_MAX_TOKENS", "2500"))
 
 # --- Big local model (FreeToken) for the "Offline AI - big model" mode ---
 # Optional. Runs frontier MoE models across GPU + RAM, so a 35B-class model fits

@@ -45,12 +45,16 @@ def _post(payload):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def generate(system, prompt):
-    """Generate an answer locally. Raises on failure (caller handles the fallback)."""
+def generate(system, prompt, concise=True, max_tokens=None):
+    """Generate text locally. Raises on failure (caller handles the fallback).
+
+    concise=True adds the brevity rules used for manual answers. Turn it off for
+    free-form work such as translating or writing a letter, where the output
+    length should follow the user's request instead."""
     payload = {
         "model": config.OLLAMA_MODEL,
         "messages": [
-            {"role": "system", "content": system + BREVITY},
+            {"role": "system", "content": system + (BREVITY if concise else "")},
             {"role": "user", "content": prompt},
         ],
         "stream": False,
@@ -62,7 +66,7 @@ def generate(system, prompt):
             "num_ctx": 8192,
             "temperature": 0.2,
             # Hard ceiling so a rambling model can't make the user wait minutes.
-            "num_predict": config.OLLAMA_MAX_TOKENS,
+            "num_predict": max_tokens or config.OLLAMA_MAX_TOKENS,
         },
     }
     try:
