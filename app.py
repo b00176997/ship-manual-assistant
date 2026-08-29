@@ -1,6 +1,5 @@
 """Local web app: upload manuals and ask questions about them."""
 import traceback
-from pathlib import Path
 
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename

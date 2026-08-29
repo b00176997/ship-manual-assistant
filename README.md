@@ -169,46 +169,26 @@ To enable it:
 (`OLLAMA_MODEL`) — e.g. `qwen2.5:14b` on a 12 GB+ GPU for better quality. If Ollama isn't
 running, the Offline AI mode simply shows the manual excerpts with a hint.
 
-### Bigger offline model (FreeToken, optional)
+### Choosing a bigger local model
 
-[FreeToken](https://github.com/FlashML-org/FreeToken) runs frontier Mixture-of-Experts
-models on consumer hardware by spreading them across the GPU **and** system RAM, so a
-35B-class model fits on a 12–16 GB card. It serves an Anthropic-compatible API, which
-this app talks to directly.
+**`upgrade_offline_model.bat`** checks how much graphics memory you have and switches to
+the best model that fits, recording the choice in `.env` automatically. Sizes verified
+against the Ollama registry:
 
-> ⚠️ **Windows note.** FreeToken's command-line version is **Linux-only**: its install
-> docs list `Linux x86_64` as the requirement, and the PyPI package hard-depends on
-> `triton==3.6.0`, which has no Windows build (`pip install freetoken` therefore always
-> fails on Windows). On Windows the only route is the **desktop app** from
-> [flashml.ai](https://flashml.ai). Run `install_freetoken.bat` — it explains this and
-> what to do instead of wasting a download.
+| Model | Size | Fits fully in 16 GB? |
+|---|---|---|
+| `qwen3:8b` | 5.2 GB | yes, with lots of room |
+| `qwen3:14b` | 9.3 GB | yes — best speed/quality balance |
+| `qwen3.6:27b` | 17.8 GB | no — ~3 GB runs from system RAM, slower but stronger |
+| `qwen3.6:35b` | 22.6 GB | no — strongest, slowest |
 
-If you have the server running (desktop app on Windows, or `ft serve` on Linux), this
-app finds it automatically — just pick **"Offline AI — big model"**. `check_system.bat`
-shows whether it is detected; if the server uses another port, set `FREETOKEN_URL` in
-`.env`. On Linux you can also use **`start_big_model.bat`**'s equivalent command
-(`ft serve Qwen3.6-35B-A3B`).
+The search model also sits in VRAM (~1.4 GB), so leave that much headroom. To pick one
+explicitly: `upgrade_offline_model.bat qwen3.6:27b`.
 
-### Simpler upgrade that works on Windows today
-
-**`upgrade_offline_model.bat`** checks how much graphics memory you have and switches the
-offline model to the best fit (a 14B model on a 12 GB+ card instead of the default 7B).
-No new software, no Linux, and it records the choice in `.env` automatically.
-
-(To serve a different model, change `FT_MODEL` at the top of `start_big_model.bat`.)
-
-**If the model server window seems to do nothing:** the first start downloads ~20 GB and
-can print nothing for a long time — that is normal. To check whether it is up yet, run
-`check_system.bat` in a second window. If it exited with an error, run
-**`freetoken_help.bat`** — it reports whether FreeToken is installed, whether a server is
-answering on port 8000, and prints `ft --help` / `ft serve --help` with the accepted
-model names.
-
-`check_system.bat` shows whether it is detected. The project does not fix a default port,
-so the app probes the usual ones; override with `FREETOKEN_URL` in `.env` if needed.
-
-> Optional extra, not a requirement. If FreeToken is missing or stopped, the app says so
-> and falls back to showing excerpts — everything else keeps working.
+> Note on reasoning models: `qwen3.6` thinks before answering. The app sends
+> `think: false`, because we are restating text that is already in the prompt — without
+> that, the whole token budget goes to hidden reasoning and the answer comes back
+> **empty**. Measured effect on a real manual: 259 s → 35 s, same quality.
 
 ## Scanned manuals (OCR)
 
@@ -250,14 +230,12 @@ and applied immediately:
 
 | Depth | Manuals searched | Excerpts sent | When to use |
 |---|---|---|---|
-| Economy | 1 | 3 | cheapest, quick lookups |
-| Balanced | 2 | 4 | default |
-| Thorough | 3 | 8 | hardest questions, best answers (costs more) |
-| Offline AI — small model | 2 | 6 | **uses the local model (Ollama), not Claude** — free, works with no internet. Quality is lower than Claude, so use it as the at-sea / no-cost option. |
-| Offline AI — big model | 2 | 6 | **uses a large local model via FreeToken** — free and offline, best local quality. Needs the optional install (see above). |
+| Balanced | 2 | 4 | everyday mode (Claude) — the default |
+| Thorough | 3 | 8 | hard questions: more context, deeper answer (Claude, costs more) |
+| Offline AI | 2 | 6 | **the local model, not Claude** — free and works with no internet. The at-sea option; weaker than Claude on diagnostic questions. |
 
-In both offline modes Claude is never contacted, so nothing is billed. If the chosen local
-engine isn't running, the excerpts are still shown together with a note on what to start.
+In Offline AI mode Claude is never contacted, so nothing is billed. If the local model
+isn't running, the excerpts are still shown together with a note on what to start.
 
 (Defaults still live in `config.py`: `ROUTE_DOCS`, `ROUTE_TOP_DOCS`, `TOP_K_ROUTED`.)
 

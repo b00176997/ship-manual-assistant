@@ -80,20 +80,6 @@ except Exception:
     else:
         line(WARN, "Offline AI (Ollama)", "not installed - online modes still work")
 
-# --- FreeToken (optional big offline model) ---
-try:
-    import freetoken_llm
-
-    if freetoken_llm.is_available():
-        line(OK, "Offline AI - big model", freetoken_llm.describe())
-    elif shutil.which("ft"):
-        line(WARN, "Offline AI - big model",
-             "installed but not running - start start_big_model.bat")
-    else:
-        line(WARN, "Offline AI - big model", "not installed (optional) - see install_freetoken.bat")
-except Exception as e:
-    line(WARN, "Offline AI - big model", f"not available ({type(e).__name__})")
-
 # --- OCR (scans) ---
 line(OK if shutil.which("tesseract") else WARN, "OCR for scanned PDFs",
      "ready" if shutil.which("tesseract") else "not installed - text PDFs still work")

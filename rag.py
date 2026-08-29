@@ -3,7 +3,6 @@ import anthropic
 
 import config
 import costs
-import freetoken_llm
 import local_llm
 from search import search
 
@@ -78,29 +77,15 @@ def answer(question):
 
     user_prompt = _build_user_prompt(question, results)
 
-    # Offline depths -> a local model. Free, no internet, nothing billed.
-    if config.AI_BACKEND in ("local", "freetoken"):
-        if config.AI_BACKEND == "freetoken":
-            engine, backend, missing = freetoken_llm, "freetoken", (
-                "The big local model is not running. Double-click start_big_model.bat "
-                "and leave that window open (run install_freetoken.bat first if you "
-                "haven't installed it). You can also switch to 'Offline AI - small "
-                "model'. Showing manual excerpts for now."
-            )
-        else:
-            engine, backend, missing = local_llm, "local", (
-                "Local AI (Ollama) is not running or the model isn't installed. "
-                "Install Ollama and run setup again, or pick an online mode. "
-                "Showing manual excerpts for now."
-            )
-
-        if engine.is_available():
+    # Offline depth -> the local model. Free, no internet, nothing billed.
+    if config.AI_BACKEND == "local":
+        if local_llm.is_available():
             try:
-                text = engine.generate(SYSTEM_PROMPT, user_prompt)
+                text = local_llm.generate(SYSTEM_PROMPT, user_prompt)
                 if not text:
                     raise ValueError("empty response from local model")
                 return {"answer": text, "sources": sources, "online": False,
-                        "engine": backend}
+                        "engine": "local"}
             except Exception as e:
                 return {
                     "answer": None,
@@ -108,7 +93,14 @@ def answer(question):
                     "online": False,
                     "note": f"Local AI error ({type(e).__name__}). Showing manual excerpts.",
                 }
-        return {"answer": None, "sources": sources, "online": False, "note": missing}
+        return {
+            "answer": None,
+            "sources": sources,
+            "online": False,
+            "note": "Local AI (Ollama) is not running or the model isn't installed. "
+            "Install Ollama and run setup again, or pick an online mode. "
+            "Showing manual excerpts for now.",
+        }
 
     # No key -> show the retrieved excerpts without a Claude answer.
     if not config.ANTHROPIC_API_KEY:

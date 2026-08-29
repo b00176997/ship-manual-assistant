@@ -26,7 +26,7 @@ CHOICES = [
 # system RAM, so they run slower but answer better. Offered as an experiment.
 BIGGER = [
     ("qwen3.6:27b", "17.8 GB", "256K context, needs ~3 GB of RAM offload on a 16 GB card"),
-    ("qwen3.6:35b", "22.6 GB", "the model FreeToken advertises - runs here too, just slower"),
+    ("qwen3.6:35b", "22.6 GB", "strongest option here, but the slowest on a 16 GB card"),
 ]
 
 

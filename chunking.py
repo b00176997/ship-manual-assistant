@@ -1,6 +1,5 @@
 """PDF text extraction and chunking into semantic pieces with page tracking."""
 import re
-from pathlib import Path
 from pypdf import PdfReader
 
 

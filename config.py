@@ -51,7 +51,7 @@ USE_THINKING = True     # adaptive reasoning — more accurate answers over tech
 # Set automatically by the search-depth choice — the "Offline AI" depth uses local.
 AI_BACKEND = "claude"
 
-# --- Local offline model (Ollama) for the "Offline AI" mode ---
+# --- Local model (Ollama) for the "Offline AI" mode and the Translator ---
 # Install Ollama from https://ollama.com ; setup.bat pulls this model.
 # qwen2.5:7b (~5 GB) runs on any 8 GB+ GPU — the safe default.
 # With a 12 GB+ card you can upgrade by putting OLLAMA_MODEL=qwen2.5:14b in .env
@@ -64,17 +64,6 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "1200"))
 # The translator writes letters, so it needs more room than a manual answer.
 TRANSLATE_MAX_TOKENS = int(os.getenv("TRANSLATE_MAX_TOKENS", "2500"))
-
-# --- Big local model (FreeToken) for the "Offline AI - big model" mode ---
-# Optional. Runs frontier MoE models across GPU + RAM, so a 35B-class model fits
-# on a 12-16 GB card. Install with install_freetoken.bat, then start:  ft serve <model>
-# The project does not fix a default port, so we probe these in order.
-FREETOKEN_URL = os.getenv("FREETOKEN_URL", "http://localhost:8000")
-FREETOKEN_FALLBACK_URLS = ["http://localhost:8000", "http://localhost:8080",
-                           "http://localhost:8001", "http://127.0.0.1:8000"]
-# Leave empty to use whatever model the server has loaded.
-FREETOKEN_MODEL = os.getenv("FREETOKEN_MODEL", "")
-FREETOKEN_MAX_TOKENS = 4000
 
 # Price per 1,000,000 tokens (USD), used to show the cost of each query.
 PRICING = {

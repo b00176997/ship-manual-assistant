@@ -108,11 +108,9 @@
       <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap">
         <label class="muted" for="depth">Search depth:</label>
         <select id="depth">
-          <option value="economy">Economy — fewer tokens</option>
           <option value="balanced">Balanced</option>
           <option value="thorough">Thorough — best answers</option>
-          <option value="offline">Offline AI — small model (free)</option>
-          <option value="offline_big">Offline AI — big model (free, needs FreeToken)</option>
+          <option value="offline">Offline AI — free, no internet</option>
         </select>
         <span id="depthHint" class="muted"></span>
       </div>
@@ -208,11 +206,9 @@ $('#trCopy').onclick = async () => {
 };
 
 const DEPTH_HINTS = {
-  economy:  '1 manual, 3 excerpts — cheapest',
-  balanced: '2 manuals, 4 excerpts — default',
-  thorough: '3 manuals, 8 excerpts — most thorough, costs more',
-  offline:  'small local model — free, works offline',
-  offline_big: 'big local model via FreeToken — free, offline, best local quality',
+  balanced: '2 manuals, 4 excerpts — everyday mode (Claude)',
+  thorough: '3 manuals, 8 excerpts — deeper, for hard questions (Claude)',
+  offline:  'local model — free, works without internet',
 };
 function setDepthHint(d) { $('#depthHint').textContent = DEPTH_HINTS[d] || ''; }
 
