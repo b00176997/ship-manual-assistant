@@ -119,8 +119,13 @@ def translate():
             "error": "The local AI is not running. Start Ollama (and make sure the "
                      f"model {config.OLLAMA_MODEL} is installed), then try again."
         }), 503
+    direction = data.get("direction") or translator.DEFAULT_DIRECTION
     try:
-        return jsonify({"result": translator.translate(text), "model": config.OLLAMA_MODEL})
+        result = translator.translate(text, direction=direction)
+        return jsonify({"result": result, "model": config.OLLAMA_MODEL,
+                        "direction": direction})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Translation failed: {type(e).__name__}"}), 500

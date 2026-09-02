@@ -131,7 +131,16 @@
         free and works without internet.
       </div>
       <textarea id="trText" style="min-height:150px"
-        placeholder="Examples:&#10;Переведи на английский и оформи как письмо: привет, как дела&#10;Translate to English and make it a formal email: ..."></textarea>
+        placeholder="Paste any text — Russian becomes English, English becomes Russian.&#10;&#10;You can also give an instruction:&#10;Переведи на английский и оформи как письмо: привет, как дела&#10;Make it a short formal email: ..."></textarea>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <label class="muted" for="trDir">Direction:</label>
+        <select id="trDir">
+          <option value="auto">Auto — RU&nbsp;&#8596;&nbsp;EN</option>
+          <option value="en">To English</option>
+          <option value="ru">To Russian</option>
+        </select>
+        <span class="muted">an instruction in the text overrides this</span>
+      </div>
       <button id="trGo">Translate</button>
       <button id="trClear" style="background:#334155">Clear</button>
     </div>
@@ -179,7 +188,7 @@ $('#trGo').onclick = async () => {
   $('#trCopied').textContent = '';
   try {
     const r = await fetch('/translate', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text})});
+      body: JSON.stringify({text, direction: $('#trDir').value})});
     const d = await r.json();
     if (d.error) $('#trResult').innerHTML = `<span class="badge warn">${d.error}</span>`;
     else {
