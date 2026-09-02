@@ -61,6 +61,22 @@
        font-size: 15px; margin: 0; cursor: pointer; }
   .tab:hover { background: #24344c; }
   .tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+  #elDrop { border: 2px dashed #475569; border-radius: 10px; padding: 26px;
+       text-align: center; color: #94a3b8; cursor: pointer; font-size: 14px; }
+  #elDrop.over { border-color: #2563eb; color: #93c5fd; }
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .thumb { position: relative; }
+  .thumb img { height: 88px; border-radius: 8px; border: 1px solid #475569;
+       display: block; }
+  .thumb .x { position: absolute; top: -6px; right: -6px; background: #b91c1c;
+       color: #fff; border: 0; border-radius: 50%; width: 22px; height: 22px;
+       font-size: 13px; line-height: 1; padding: 0; margin: 0; cursor: pointer; }
+  .turn { border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .turn.me { background: #0f172a; border: 1px solid #334155; }
+  .turn.ai { background: #12233d; border: 1px solid #1e3a5f; }
+  .turn .who { font-size: 12px; color: #94a3b8; margin-bottom: 6px;
+       text-transform: uppercase; letter-spacing: .5px; }
+  .turn .body { white-space: pre-wrap; line-height: 1.55; }
 </style>
 </head>
 <body>
@@ -72,6 +88,7 @@
 <div class="tabs">
   <button class="tab active" id="tabManuals">📚 Manuals</button>
   <button class="tab" id="tabTranslator">🌐 Translator</button>
+  <button class="tab" id="tabElectrics">⚡ Electrics</button>
 </div>
 
 <div class="layout">
@@ -145,6 +162,30 @@
       <button id="trClear" style="background:#334155">Clear</button>
     </div>
 
+    <!-- ELECTRICS VIEW -->
+    <div class="card view-electrics" style="display:none">
+      <h2>⚡ Electrical help from a photo</h2>
+      <div class="muted" style="margin-bottom:12px">
+        Photograph the schematic or the panel, say what is wrong, and work through the
+        checks step by step. Answers use your manuals when they cover it.
+        <b>Needs internet.</b>
+      </div>
+      <div id="elDrop">📷 Drop photos here, or click to choose (up to 3)</div>
+      <input type="file" id="elFile" accept="image/*" multiple style="display:none">
+      <div class="thumbs" id="elThumbs"></div>
+      <textarea id="elText" style="min-height:90px; margin-top:12px"
+        placeholder="Опишите проблему, например:&#10;не срабатывает реле K3 на этой схеме, почему?&#10;&#10;Дальше просто отвечайте на вопросы — что показал прибор."></textarea>
+      <button id="elGo">Ask</button>
+      <button id="elNew" style="background:#334155">New problem</button>
+      <span id="elMsg" class="muted" style="margin-left:10px"></span>
+    </div>
+
+    <div class="card view-electrics" id="elChatCard" style="display:none">
+      <h2>Conversation</h2>
+      <div id="elChat"></div>
+      <div id="elSources" style="margin-top:8px"></div>
+    </div>
+
     <div class="card view-translator" id="trResultCard" style="display:none">
       <h2>Result</h2>
       <div id="trResult" class="answer"></div>
@@ -164,19 +205,23 @@ let currentTab = 'manuals';
 function showTab(name) {
   currentTab = name;
   const manuals = name === 'manuals';
-  $('#tabManuals').classList.toggle('active', manuals);
-  $('#tabTranslator').classList.toggle('active', !manuals);
+  $('#tabManuals').classList.toggle('active', name === 'manuals');
+  $('#tabTranslator').classList.toggle('active', name === 'translator');
+  $('#tabElectrics').classList.toggle('active', name === 'electrics');
   document.querySelector('.sidebar').style.display = manuals ? '' : 'none';
   $$('.view-manuals').forEach(e => e.style.display = manuals ? '' : 'none');
-  $$('.view-translator').forEach(e => e.style.display = manuals ? 'none' : '');
+  $$('.view-translator').forEach(e => e.style.display = name === 'translator' ? '' : 'none');
+  $$('.view-electrics').forEach(e => e.style.display = name === 'electrics' ? '' : 'none');
   // the answer and banner cards belong to the manuals view but are toggled
   // by their own logic, so only force them hidden when leaving the tab
   if (!manuals) { $('#result').style.display = 'none'; $('#banner').style.display = 'none'; }
   else { refresh(); }
-  if (!manuals) $('#trResultCard').style.display = $('#trResult').textContent ? '' : 'none';
+  if (name === 'translator') $('#trResultCard').style.display = $('#trResult').textContent ? '' : 'none';
+  if (name === 'electrics') $('#elChatCard').style.display = $('#elChat').children.length ? '' : 'none';
 }
 $('#tabManuals').onclick = () => showTab('manuals');
 $('#tabTranslator').onclick = () => showTab('translator');
+$('#tabElectrics').onclick = () => showTab('electrics');
 
 // ---------- translator ----------
 $('#trGo').onclick = async () => {
@@ -337,6 +382,117 @@ $('#ask').onclick = async () => {
     $('#sources').innerHTML = html;
   }
   refresh();  // update today's spend counter
+};
+
+// ---------- electrics: photo diagnosis ----------
+let elConv = null;
+let elPhotos = [];   // {file, url}
+
+function elRenderThumbs() {
+  const box = $('#elThumbs'); box.innerHTML = '';
+  elPhotos.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'thumb';
+    const img = document.createElement('img'); img.src = p.url; d.appendChild(img);
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '\u00d7';
+    x.title = 'remove';
+    x.onclick = () => { URL.revokeObjectURL(p.url); elPhotos.splice(i, 1); elRenderThumbs(); };
+    d.appendChild(x); box.appendChild(d);
+  });
+  $('#elDrop').textContent = elPhotos.length
+    ? elPhotos.length + ' photo(s) attached \u2014 click to add more (max 3)'
+    : '\ud83d\udcf7 Drop photos here, or click to choose (up to 3)';
+}
+
+function elAddFiles(list) {
+  for (const f of list) {
+    if (!f.type.startsWith('image/')) continue;
+    if (elPhotos.length >= 3) break;
+    elPhotos.push({file: f, url: URL.createObjectURL(f)});
+  }
+  elRenderThumbs();
+}
+
+const elDrop = $('#elDrop'), elFile = $('#elFile');
+elDrop.onclick = () => elFile.click();
+elFile.onchange = () => { elAddFiles(elFile.files); elFile.value = ''; };
+elDrop.ondragover = e => { e.preventDefault(); elDrop.classList.add('over'); };
+elDrop.ondragleave = () => elDrop.classList.remove('over');
+elDrop.ondrop = e => { e.preventDefault(); elDrop.classList.remove('over'); elAddFiles(e.dataTransfer.files); };
+
+function elAddTurn(who, text, cls) {
+  const d = document.createElement('div'); d.className = 'turn ' + cls;
+  const w = document.createElement('div'); w.className = 'who'; w.textContent = who;
+  const b = document.createElement('div'); b.className = 'body'; b.textContent = text;
+  d.appendChild(w); d.appendChild(b); $('#elChat').appendChild(d);
+  $('#elChatCard').style.display = '';
+  d.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  return b;
+}
+
+$('#elGo').onclick = async () => {
+  const q = $('#elText').value.trim();
+  if (!q && !elPhotos.length) { $('#elMsg').textContent = 'Add a photo or describe the problem'; return; }
+  const btn = $('#elGo'); btn.disabled = true; $('#elMsg').textContent = '';
+
+  elAddTurn('You' + (elPhotos.length ? ' \u00b7 ' + elPhotos.length + ' photo(s)' : ''),
+            q || '(photo only)', 'me');
+  const waiting = elAddTurn('Assistant', 'Looking at the photo and the manuals...', 'ai');
+
+  const fd = new FormData();
+  fd.append('question', q);
+  if (elConv) fd.append('conv_id', elConv);
+  elPhotos.forEach(p => fd.append('images', p.file, p.file.name));
+
+  try {
+    const r = await fetch('/electrics', {method: 'POST', body: fd});
+    const d = await r.json();
+    if (d.error) {
+      waiting.innerHTML = '<span class="badge warn">' + d.error + '</span>';
+    } else {
+      elConv = d.conv_id;
+      waiting.textContent = d.answer;
+      if (d.usage) {
+        const n = document.createElement('div');
+        n.className = 'muted'; n.style.marginTop = '10px';
+        n.textContent = '\u2248 $' + d.usage.cost_usd.toFixed(4) + ' \u00b7 ' +
+                        d.usage.model + ' \u00b7 step ' + d.turns;
+        waiting.appendChild(n);
+      }
+      let html = '';
+      if (d.sources && d.sources.length) {
+        html = '<h2>From your manuals</h2>';
+        d.sources.forEach(s => {
+          html += '<div class="src"><div class="head">[Source ' + s.n + '] ' +
+                  s.source + ', page ' + s.page + '</div><div class="body">' +
+                  s.text.replace(/</g, '&lt;') + '</div></div>';
+        });
+      }
+      $('#elSources').innerHTML = html;
+      // photos are part of the conversation now; clear the tray for the next step
+      elPhotos.forEach(p => URL.revokeObjectURL(p.url));
+      elPhotos = []; elRenderThumbs();
+      $('#elText').value = '';
+      refresh();   // update today's spend
+    }
+  } catch (e) {
+    waiting.innerHTML = '<span class="badge warn">Error: ' + e + '</span>';
+  }
+  btn.disabled = false;
+};
+
+$('#elNew').onclick = async () => {
+  if (elConv) {
+    try {
+      await fetch('/electrics/reset', {method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({conv_id: elConv})});
+    } catch (e) { /* nothing to clean up */ }
+  }
+  elConv = null;
+  elPhotos.forEach(p => URL.revokeObjectURL(p.url)); elPhotos = []; elRenderThumbs();
+  $('#elChat').innerHTML = ''; $('#elSources').innerHTML = '';
+  $('#elChatCard').style.display = 'none'; $('#elText').value = '';
+  $('#elMsg').textContent = 'Started a new problem';
 };
 
 refresh();

@@ -5,3 +5,4 @@ pypdf>=5.0.0
 flask>=3.0.0
 python-dotenv>=1.0.0
 ocrmypdf>=16.0.0
+pillow>=10.0.0

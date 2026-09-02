@@ -65,6 +65,10 @@ OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "1200"))
 # The translator writes letters, so it needs more room than a manual answer.
 TRANSLATE_MAX_TOKENS = int(os.getenv("TRANSLATE_MAX_TOKENS", "2500"))
 
+# --- Photo help with the electrical system (Claude vision, needs internet) ---
+# Diagnosis answers are step-by-step measurement plans, so give them room.
+ELECTRICS_MAX_TOKENS = int(os.getenv("ELECTRICS_MAX_TOKENS", "3000"))
+
 # Price per 1,000,000 tokens (USD), used to show the cost of each query.
 PRICING = {
     "claude-opus-4-8":  {"in": 5.0, "out": 25.0},

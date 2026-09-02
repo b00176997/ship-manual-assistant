@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 
 import config
 import costs
+import electrics
 import settings
 import translator
 from ingest import (
@@ -129,6 +130,46 @@ def translate():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Translation failed: {type(e).__name__}"}), 500
+
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_IMAGES_PER_TURN = 3
+
+
+@app.route("/electrics", methods=["POST"])
+def electrics_ask():
+    """One turn of photo-based electrical diagnosis (multipart: photos + question)."""
+    question = (request.form.get("question") or "").strip()
+    conv_id = request.form.get("conv_id") or None
+
+    images = []
+    for f in request.files.getlist("images")[:MAX_IMAGES_PER_TURN]:
+        if not f.filename:
+            continue
+        mt = (f.mimetype or "").lower()
+        if mt not in ALLOWED_IMAGE_TYPES:
+            return jsonify({"error": f"Unsupported image type: {mt or 'unknown'}. "
+                                     "Use JPG, PNG, WEBP or GIF."}), 400
+        images.append((f.read(), mt))
+
+    if not question and not images:
+        return jsonify({"error": "Add a photo or describe the problem"}), 400
+
+    try:
+        return jsonify(electrics.ask(conv_id, question, images))
+    except (ValueError, RuntimeError) as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Could not get an answer ({type(e).__name__}). "
+                                 "Check the internet connection."}), 502
+
+
+@app.route("/electrics/reset", methods=["POST"])
+def electrics_reset():
+    data = request.get_json(force=True, silent=True) or {}
+    electrics.reset(data.get("conv_id"))
+    return jsonify({"ok": True})
 
 
 @app.route("/ask", methods=["POST"])
