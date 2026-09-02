@@ -56,6 +56,7 @@ them as [Source N]; ignore them when they are not about this question."""
 # lasts minutes. Restarting the program simply starts a fresh conversation.
 _conversations = {}
 MAX_TURNS = 24          # keep a session from growing without bound
+MAX_CONVERSATIONS = 20  # abandoned conversations must not leak memory
 IMAGE_MAX_PX = 1600     # long edge; enough for schematic text, keeps cost sane
 IMAGE_MIN_SCORE = 0.35  # below this the manuals clearly aren't about the question
 
@@ -102,6 +103,11 @@ def _manual_context(question):
 
 def start():
     """Create an empty conversation and return its id."""
+    # Conversations hold photos, so don't let abandoned ones pile up in memory.
+    if len(_conversations) >= MAX_CONVERSATIONS:
+        oldest = sorted(_conversations, key=lambda k: _conversations[k]["created"])
+        for k in oldest[:len(_conversations) - MAX_CONVERSATIONS + 1]:
+            _conversations.pop(k, None)
     cid = uuid.uuid4().hex
     _conversations[cid] = {"messages": [], "created": time.time()}
     return cid
@@ -139,8 +145,13 @@ def ask(conv_id, question, images=None):
 
     conv["messages"].append({"role": "user", "content": content})
     # Trim the oldest turns rather than letting an old photo inflate every request.
+    # Slicing alone is not enough: the API requires the history to START with a
+    # user message, and a plain tail slice can begin with an assistant reply.
     if len(conv["messages"]) > MAX_TURNS:
-        conv["messages"] = conv["messages"][-MAX_TURNS:]
+        trimmed = conv["messages"][-MAX_TURNS:]
+        while trimmed and trimmed[0]["role"] != "user":
+            trimmed.pop(0)
+        conv["messages"] = trimmed
 
     client = anthropic.Anthropic()
     # A diagnosis runs several turns and the API is stateless, so the photo is
