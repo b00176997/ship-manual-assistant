@@ -84,8 +84,9 @@ try:
             if size_gb > room:
                 line(WARN, "  fits in video memory?",
                      f"no - {size_gb:.0f} GB model, ~{room:.0f} GB free: about "
-                     f"{size_gb - room:.0f} GB runs on the processor, so offline "
-                     "answers are slower")
+                     f"{size_gb - room:.0f} GB runs on the processor. Expected "
+                     "for this model - offline answers are just slower, nothing "
+                     "is broken")
             else:
                 line(OK, "  fits in video memory?",
                      f"yes - {size_gb:.0f} GB model, ~{room:.0f} GB free: full GPU speed")
