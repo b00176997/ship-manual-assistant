@@ -17,6 +17,7 @@ print(" SHIP MECHANIC ASSISTANT - SYSTEM CHECK")
 print("=" * 62)
 
 problems = []
+vram_gb = 0.0
 
 # --- Python ---
 v = sys.version_info
@@ -33,7 +34,8 @@ try:
         # but every kernel launch fails. Run a real operation to be sure.
         try:
             (torch.randn(64, 64, device="cuda") @ torch.randn(64, 64, device="cuda")).sum().item()
-            line(OK, "Graphics card (GPU)", f"{name} - working, indexing will be fast")
+            vram_gb = torch.cuda.get_device_properties(0).total_memory / 2**30
+            line(OK, "Graphics card (GPU)", f"{name}, {vram_gb:.0f} GB - working")
         except Exception as e:
             line(BAD, "Graphics card (GPU)", f"{name} - NOT usable ({type(e).__name__})")
             problems.append("The GPU is detected but PyTorch cannot use it. "
@@ -67,10 +69,26 @@ try:
     with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3) as r:
         import json
 
-        names = [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
+        names = {m["name"]: m.get("size", 0)
+                 for m in json.loads(r.read().decode()).get("models", [])}
     want = config.OLLAMA_MODEL
     if want in names:
         line(OK, "Offline AI (Ollama)", f"{want} ready")
+        # The offline model and the search model share the video memory. A model
+        # bigger than the card still works - Ollama runs the overflow on the
+        # processor - but answers get slower and the GPU looks only half busy.
+        # That confuses people into thinking the card is broken, so say it here.
+        size_gb = names[want] / 2**30
+        if vram_gb:
+            room = vram_gb - 2.0          # the search model keeps about 2 GB
+            if size_gb > room:
+                line(WARN, "  fits in video memory?",
+                     f"no - {size_gb:.0f} GB model, ~{room:.0f} GB free: about "
+                     f"{size_gb - room:.0f} GB runs on the processor, so offline "
+                     "answers are slower")
+            else:
+                line(OK, "  fits in video memory?",
+                     f"yes - {size_gb:.0f} GB model, ~{room:.0f} GB free: full GPU speed")
     else:
         line(WARN, "Offline AI (Ollama)", f"running, but {want} is missing")
         problems.append(f"Offline AI needs its model: run  ollama pull {want}")
@@ -95,5 +113,12 @@ if problems:
         print(f"   - {p}")
 else:
     print(" Everything looks good.")
+# Asked every time: "why is my graphics card idle?" It is idle most of the day
+# by design, because the paid modes answer over the internet.
+print()
+print(" When the graphics card works: while manuals are being indexed, and")
+print(" for the Offline AI and the Translator. Balanced and Thorough send the")
+print(" question to Claude over the internet, so the card stays idle then.")
+print(" An idle card during a normal question is correct, not a fault.")
 print("=" * 62)
 print()
